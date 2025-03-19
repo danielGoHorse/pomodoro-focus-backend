@@ -1,0 +1,6 @@
+@Pomodoro.Api_HostAddress = http://localhost:5103
+
+GET {{Pomodoro.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
