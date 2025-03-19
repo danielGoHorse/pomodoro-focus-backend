@@ -1,20 +1,15 @@
-# Usa a imagem oficial do .NET SDK para build
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS runtime
 WORKDIR /app
 
-# Copia o csproj e restaura as dependências
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+WORKDIR /app
 COPY *.csproj ./
 RUN dotnet restore
 
-# Copia tudo e faz o build em Release
 COPY . ./
 RUN dotnet publish -c Release -o out
 
-# Usa a imagem oficial do ASP.NET para rodar
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
+FROM runtime AS final
 WORKDIR /app
-COPY --from=build /app/out .
-
-# Expõe a porta 80 e define o entrypoint
-EXPOSE 80
+COPY --from=build /app/out ./
 ENTRYPOINT ["dotnet", "Pomodoro.Api.dll"]
