@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "aE9r48UMUa8lQhXgTv5P26p3J0FQYjbPQMSaJtRkUbE=",
+  "Source": "Pomodoro.Api",
+  "BasePath": "_content/Pomodoro.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
