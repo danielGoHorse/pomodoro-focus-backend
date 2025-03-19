@@ -17,4 +17,4 @@ COPY --from=build /app/out .
 
 # Expõe a porta 80 e define o entrypoint
 EXPOSE 80
-ENTRYPOINT ["dotnet", "SeuProjeto.dll"]
+ENTRYPOINT ["dotnet", "Pomodoro.Api.dll"]
