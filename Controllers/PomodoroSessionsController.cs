@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/pomodorosession")]
 public class PomodoroSessionController : ControllerBase
 {
     private readonly IPomodoroSessionService _service;
