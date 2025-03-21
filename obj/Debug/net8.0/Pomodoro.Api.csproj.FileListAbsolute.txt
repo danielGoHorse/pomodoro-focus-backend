@@ -133,3 +133,10 @@ C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\obj\Deb
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\obj\Debug\net8.0\Pomodoro.Api.pdb
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\obj\Debug\net8.0\Pomodoro.Api.genruntimeconfig.cache
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\obj\Debug\net8.0\ref\Pomodoro.Api.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
