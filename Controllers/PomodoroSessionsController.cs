@@ -17,7 +17,6 @@ public class PomodoroSessionController : ControllerBase
     {
         var sessions = await _service.GetAllAsync();
 
-        // Garante que nunca retorna null
         if (sessions == null)
             sessions = new List<PomodoroSessionDto>();
 
