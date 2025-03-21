@@ -16,6 +16,11 @@ public class PomodoroSessionController : ControllerBase
     public async Task<ActionResult<IEnumerable<PomodoroSessionDto>>> GetAll()
     {
         var sessions = await _service.GetAllAsync();
+
+        // Garante que nunca retorna null
+        if (sessions == null)
+            sessions = new List<PomodoroSessionDto>();
+
         return Ok(sessions);
     }
 

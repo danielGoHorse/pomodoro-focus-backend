@@ -140,3 +140,9 @@ C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Deb
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
 C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\web.config
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\appsettings.Development.json
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\appsettings.json
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\Pomodoro.Api.deps.json
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\Pomodoro.Api.runtimeconfig.json
+C:\workspace\Projeto Metodo Pomodoro\pomodoro-focus-backend\Pomodoro.Api\bin\Debug\net8.0\out\Pomodoro.Api.staticwebassets.endpoints.json
