@@ -24,7 +24,7 @@ public class PomodoroSessionService : IPomodoroSessionService
         return sessions.Select(s => new PomodoroSessionDto
         {
             Id = s.Id,
-            Description = s.Description ?? string.Empty,
+            // Description = s.Description ?? string.Empty,
             CompletedAt = s.CompletedAt
         });
     }
@@ -34,12 +34,12 @@ public class PomodoroSessionService : IPomodoroSessionService
         var session = await _repository.GetByIdAsync(id);
 
         if (session == null)
-            return new PomodoroSessionDto { Id = 0, Description = "Não encontrado", CompletedAt = DateTime.MinValue };
+            return new PomodoroSessionDto { Id = 0, CompletedAt = DateTime.MinValue };
 
         return new PomodoroSessionDto
         {
             Id = session.Id,
-            Description = session.Description,
+            // Description = session.Description,
             CompletedAt = session.CompletedAt
         };
     }
@@ -48,7 +48,7 @@ public class PomodoroSessionService : IPomodoroSessionService
     {
         var session = new PomodoroSession
         {
-            Description = dto.Description,
+            // Description = dto.Description,
             CompletedAt = dto.CompletedAt
         };
 
