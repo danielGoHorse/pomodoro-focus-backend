@@ -36,12 +36,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Swagger Middlewares
+// Aplica migrations automaticamente no deploy
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
-
-// Optional: UseHttpsRedirection se necessário
-// app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
