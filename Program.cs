@@ -16,6 +16,20 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Spotify Config (adiciona as variáveis do ambiente)
+builder.Configuration.AddEnvironmentVariables();
+
+var spotifyConfig = builder.Configuration.GetSection("Spotify");
+var clientId = spotifyConfig["ClientId"];
+var clientSecret = spotifyConfig["ClientSecret"];
+var redirectUri = spotifyConfig["RedirectUri"];
+
+// Exemplo de log para conferir no console (opcional em prod)
+Console.WriteLine($"Spotify ClientId: {clientId}");
+
+// ⬇️ ADICIONA O HTTPCLIENT FACTORY
+builder.Services.AddHttpClient();
+
 // CORS (libera o frontend para acessar o backend)
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -32,17 +46,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
         });
 });
-
-// Spotify Config (adiciona as variáveis)
-builder.Configuration.AddEnvironmentVariables(); // 👈 importante para pegar do Railway
-
-var spotifyConfig = builder.Configuration.GetSection("Spotify");
-var clientId = spotifyConfig["ClientId"];
-var clientSecret = spotifyConfig["ClientSecret"];
-var redirectUri = spotifyConfig["RedirectUri"];
-
-// Exemplo de log para conferir no console
-Console.WriteLine($"Spotify ClientId: {clientId}");
 
 var app = builder.Build();
 
