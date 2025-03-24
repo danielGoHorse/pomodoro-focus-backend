@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace Pomodoro.Api.Controllers
 {
     [ApiController]
-    [Route("api/spotifyauth")]
+    [Route("api/[controller]")]
     public class SpotifyAuthController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
