@@ -98,5 +98,39 @@ namespace Pomodoro.Api.Controllers
 
             return Redirect(redirectWithTokens);
         }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+        {
+            var clientId = _spotifySettings.ClientId;
+            var clientSecret = _spotifySettings.ClientSecret;
+
+            var client = _httpClientFactory.CreateClient();
+
+            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
+            request.Headers.Add("Authorization", $"Basic {basicAuth}");
+
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    {
+        { "grant_type", "refresh_token" },
+        { "refresh_token", refreshToken }
+    });
+
+            var response = await client.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"❌ Erro ao renovar token: {content}");
+                return BadRequest(content);
+            }
+
+            Console.WriteLine($"✅ Novo access token retornado!");
+
+            return Ok(content);
+        }
+
     }
 }
