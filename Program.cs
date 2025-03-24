@@ -61,4 +61,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+Console.WriteLine("🎯 Spotify__ClientId: " + builder.Configuration["Spotify__ClientId"]);
+Console.WriteLine("🎯 Spotify__RedirectUri: " + builder.Configuration["Spotify__RedirectUri"]);
+Console.WriteLine("🎯 Spotify__ClientSecret: " + builder.Configuration["Spotify__ClientSecret"]);
+
 app.Run();
