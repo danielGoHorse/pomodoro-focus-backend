@@ -1,136 +1,201 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Pomodoro.Api.Configurations; // ⬅️ a pasta que criamos
+using Microsoft.Extensions.Configuration;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 
-namespace Pomodoro.Api.Controllers
+namespace PomodoroFocus.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class SpotifyAuthController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly SpotifySettings _spotifySettings;
+        private readonly ILogger<SpotifyAuthController> _logger;
+
+        private readonly string _clientId;
+        private readonly string _clientSecret;
+        private readonly string _redirectUri;
 
         public SpotifyAuthController(
+            IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IOptions<SpotifySettings> spotifyOptions
-        )
+            ILogger<SpotifyAuthController> logger)
         {
+            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
-            _spotifySettings = spotifyOptions.Value; // 🎯 Aqui é onde ele carrega
+            _logger = logger;
+
+            _clientId = _configuration["Spotify:ClientId"];
+            _clientSecret = _configuration["Spotify:ClientSecret"];
+            _redirectUri = _configuration["Spotify:RedirectUri"];
         }
 
+        /// <summary>
+        /// Inicia o fluxo de autenticação do Spotify
+        /// </summary>
         [HttpGet("login")]
         public IActionResult Login()
         {
-            Console.WriteLine($"🎯 ClientId: {_spotifySettings.ClientId}");
-            Console.WriteLine($"🎯 RedirectUri: {_spotifySettings.RedirectUri}");
-            Console.WriteLine($"🎯 ClientSecret: {_spotifySettings.ClientSecret}");
-
-            if (string.IsNullOrEmpty(_spotifySettings.ClientId) || string.IsNullOrEmpty(_spotifySettings.RedirectUri))
+            var scopes = new List<string>
             {
-                return StatusCode(500, "❌ Variáveis de ambiente do Spotify não estão configuradas corretamente.");
-            }
+                "user-read-playback-state",
+                "user-modify-playback-state",
+                "user-read-currently-playing",
+                "streaming"
+            };
 
-            var scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
+            var authorizeUrl = "https://accounts.spotify.com/authorize" +
+                $"?response_type=code" +
+                $"&client_id={_clientId}" +
+                $"&scope={HttpUtility.UrlEncode(string.Join(" ", scopes))}" +
+                $"&redirect_uri={HttpUtility.UrlEncode(_redirectUri)}";
 
-            var authUrl = $"https://accounts.spotify.com/authorize" +
-                          $"?response_type=code" +
-                          $"&client_id={_spotifySettings.ClientId}" +
-                          $"&scope={Uri.EscapeDataString(scopes)}" +
-                          $"&redirect_uri={Uri.EscapeDataString(_spotifySettings.RedirectUri)}";
+            _logger.LogInformation("🔗 Redirecionando para: {Url}", authorizeUrl);
 
-            Console.WriteLine($"🔗 Redirecionando para: {authUrl}");
-
-            return Redirect(authUrl);
+            return Redirect(authorizeUrl);
         }
 
+        /// <summary>
+        /// Callback chamado pelo Spotify com o código de autorização
+        /// </summary>
         [HttpGet("callback")]
         public async Task<IActionResult> Callback([FromQuery] string code)
         {
-            Console.WriteLine($"🎟️ Código de autorização recebido: {code}");
-            Console.WriteLine($"🎯 ClientId: {_spotifySettings.ClientId}");
-            Console.WriteLine($"🎯 RedirectUri: {_spotifySettings.RedirectUri}");
-            Console.WriteLine($"🎯 ClientSecret: {_spotifySettings.ClientSecret}");
+            if (string.IsNullOrEmpty(code))
+                return BadRequest("Código não informado!");
 
-            if (string.IsNullOrEmpty(_spotifySettings.ClientId) || string.IsNullOrEmpty(_spotifySettings.ClientSecret))
+            _logger.LogInformation("🎟️ Código de autorização recebido: {Code}", code);
+
+            var tokens = await GetTokensAsync(code);
+
+            if (tokens == null)
+                return BadRequest("Erro ao obter tokens do Spotify.");
+
+            // Frontend URL para onde você quer mandar os tokens!
+            var frontendUrl = "https://pomodoro-focus-ten.vercel.app";
+
+            var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
+
+            _logger.LogInformation("✅ Tokens recebidos do Spotify");
+            _logger.LogInformation("Access Token: {AccessToken}", tokens.AccessToken);
+            _logger.LogInformation("Refresh Token: {RefreshToken}", tokens.RefreshToken);
+
+            return Redirect(redirectUrl);
+        }
+
+        /// <summary>
+        /// Endpoint para renovar o Access Token
+        /// </summary>
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+            if (string.IsNullOrEmpty(request.RefreshToken))
             {
-                return StatusCode(500, "❌ Variáveis do Spotify ausentes.");
+                _logger.LogWarning("🚫 Refresh token não enviado");
+                return BadRequest("Refresh token não informado!");
             }
 
-            var client = _httpClientFactory.CreateClient();
+            _logger.LogInformation("🔄 Solicitando novo Access Token com Refresh Token...");
 
-            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_spotifySettings.ClientId}:{_spotifySettings.ClientSecret}"));
+            var token = await RefreshAccessTokenAsync(request.RefreshToken);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
-            request.Headers.Add("Authorization", $"Basic {basicAuth}");
+            if (token == null)
+            {
+                _logger.LogError("❌ Falha ao renovar access token");
+                return BadRequest("Erro ao renovar access token.");
+            }
 
-            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            return Ok(new
+            {
+                access_token = token.AccessToken,
+                expires_in = token.ExpiresIn
+            });
+        }
+
+        #region Private Methods
+
+        private async Task<SpotifyTokenResponse?> GetTokensAsync(string code)
+        {
+            using var client = _httpClientFactory.CreateClient();
+
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authHeader);
+
+            var postData = new Dictionary<string, string>
             {
                 { "grant_type", "authorization_code" },
                 { "code", code },
-                { "redirect_uri", _spotifySettings.RedirectUri }
-            });
+                { "redirect_uri", _redirectUri }
+            };
 
-            Console.WriteLine("📡 Solicitando access token do Spotify...");
+            var content = new FormUrlEncodedContent(postData);
 
-            var response = await client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            var response = await client.PostAsync("https://accounts.spotify.com/api/token", content);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"❌ Erro ao trocar código por token: {content}");
-                return BadRequest("Erro ao obter o token do Spotify.");
+                _logger.LogError("❌ Erro ao obter tokens do Spotify: {StatusCode}", response.StatusCode);
+                return null;
             }
 
-            var tokenResponse = JsonDocument.Parse(content).RootElement;
-            var accessToken = tokenResponse.GetProperty("access_token").GetString();
-            var refreshToken = tokenResponse.GetProperty("refresh_token").GetString();
+            var json = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine("✅ Tokens recebidos do Spotify");
-            Console.WriteLine($"Access Token: {accessToken}");
-            Console.WriteLine($"Refresh Token: {refreshToken}");
+            _logger.LogInformation("📡 Resposta do Spotify: {Json}", json);
 
-            var frontEndUrl = "https://pomodoro-focus-ten.vercel.app";
-            var redirectWithTokens = $"{frontEndUrl}/?access_token={accessToken}&refresh_token={refreshToken}";
-
-            return Redirect(redirectWithTokens);
+            return JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
         }
 
-        [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+        private async Task<SpotifyTokenResponse?> RefreshAccessTokenAsync(string refreshToken)
         {
-            var clientId = _spotifySettings.ClientId;
-            var clientSecret = _spotifySettings.ClientSecret;
+            using var client = _httpClientFactory.CreateClient();
 
-            var client = _httpClientFactory.CreateClient();
+            var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
 
-            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authHeader);
 
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
-            request.Headers.Add("Authorization", $"Basic {basicAuth}");
+            var postData = new Dictionary<string, string>
+            {
+                { "grant_type", "refresh_token" },
+                { "refresh_token", refreshToken }
+            };
 
-            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
-    {
-        { "grant_type", "refresh_token" },
-        { "refresh_token", refreshToken }
-    });
+            var content = new FormUrlEncodedContent(postData);
 
-            var response = await client.SendAsync(request);
-            var content = await response.Content.ReadAsStringAsync();
+            var response = await client.PostAsync("https://accounts.spotify.com/api/token", content);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"❌ Erro ao renovar token: {content}");
-                return BadRequest(content);
+                _logger.LogError("❌ Erro ao renovar access token do Spotify: {StatusCode}", response.StatusCode);
+                return null;
             }
 
-            Console.WriteLine($"✅ Novo access token retornado!");
+            var json = await response.Content.ReadAsStringAsync();
 
-            return Ok(content);
+            _logger.LogInformation("✅ Novo Access Token recebido: {Json}", json);
+
+            return JsonSerializer.Deserialize<SpotifyTokenResponse>(json);
         }
 
+        #endregion
     }
+
+    #region DTOs
+    public class SpotifyTokenResponse
+    {
+        public string AccessToken { get; set; }
+        public string TokenType { get; set; }
+        public int ExpiresIn { get; set; }
+        public string RefreshToken { get; set; }
+        public string Scope { get; set; }
+    }
+
+    public class RefreshTokenRequest
+    {
+        public string RefreshToken { get; set; }
+    }
+    #endregion
 }
