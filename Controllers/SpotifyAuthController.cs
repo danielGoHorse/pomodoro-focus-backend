@@ -21,19 +21,28 @@ namespace Pomodoro.Api.Controllers
         [HttpGet("login")]
         public IActionResult Login()
         {
-            if (string.IsNullOrEmpty(_spotifySettings.ClientId) ||
-                string.IsNullOrEmpty(_spotifySettings.RedirectUri))
+            var clientId = _configuration["Spotify:ClientId"];
+            var redirectUri = _configuration["Spotify:RedirectUri"];
+            var clientSecret = _configuration["Spotify:ClientSecret"];
+
+            Console.WriteLine($"🎯 ClientId: {clientId}");
+            Console.WriteLine($"🎯 RedirectUri: {redirectUri}");
+            Console.WriteLine($"🎯 ClientSecret: {clientSecret}");
+
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri))
             {
-                return StatusCode(500, "❌ Spotify config ausente ou inválida.");
+                return StatusCode(500, "❌ Variáveis de ambiente do Spotify não estão configuradas corretamente.");
             }
 
             var scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
 
             var authUrl = $"https://accounts.spotify.com/authorize" +
                           $"?response_type=code" +
-                          $"&client_id={_spotifySettings.ClientId}" +
+                          $"&client_id={clientId}" +
                           $"&scope={Uri.EscapeDataString(scopes)}" +
-                          $"&redirect_uri={Uri.EscapeDataString(_spotifySettings.RedirectUri)}";
+                          $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+
+            Console.WriteLine($"🔗 Redirecionando para: {authUrl}");
 
             return Redirect(authUrl);
         }
