@@ -12,7 +12,7 @@ Console.WriteLine($"🎯 Spotify__ClientSecret: {builder.Configuration["Spotify_
 Console.WriteLine($"🎯 Spotify__RedirectUri: {builder.Configuration["Spotify__RedirectUri"]}");
 
 // Configura porta (Railway usa PORT por padrão)
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
 // Services
