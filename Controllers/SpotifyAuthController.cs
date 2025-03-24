@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
 using System.Text.Json;
 
+
 namespace Pomodoro.Api.Controllers
 {
     [ApiController]
@@ -11,6 +12,7 @@ namespace Pomodoro.Api.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
 
+        private readonly SpotifySettings _spotifySettings;
         public SpotifyAuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
@@ -19,25 +21,19 @@ namespace Pomodoro.Api.Controllers
         [HttpGet("login")]
         public IActionResult Login()
         {
-            var clientId = _configuration["Spotify__ClientId"];
-            var redirectUri = _configuration["Spotify__RedirectUri"];
-
-            // Loga no console
-            Console.WriteLine($"clientId: {clientId}");
-            Console.WriteLine($"redirectUri: {redirectUri}");
-
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri))
+            if (string.IsNullOrEmpty(_spotifySettings.ClientId) ||
+                string.IsNullOrEmpty(_spotifySettings.RedirectUri))
             {
-                return StatusCode(500, "❌ Variáveis de ambiente do Spotify não estão configuradas corretamente.");
+                return StatusCode(500, "❌ Spotify config ausente ou inválida.");
             }
 
             var scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
 
             var authUrl = $"https://accounts.spotify.com/authorize" +
                           $"?response_type=code" +
-                          $"&client_id={clientId}" +
+                          $"&client_id={_spotifySettings.ClientId}" +
                           $"&scope={Uri.EscapeDataString(scopes)}" +
-                          $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+                          $"&redirect_uri={Uri.EscapeDataString(_spotifySettings.RedirectUri)}";
 
             return Redirect(authUrl);
         }

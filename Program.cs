@@ -36,12 +36,21 @@ builder.Services.AddCors(options =>
         });
 });
 
-// Configura Spotify com variáveis de ambiente
-builder.Configuration.AddEnvironmentVariables();
-
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
+builder.Services.Configure<SpotifySettings>(
+    builder.Configuration.GetSection("Spotify")
+);
+builder.Services.AddHttpClient();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 // Cria o app
+Console.WriteLine("🎯 Spotify__ClientId: " + builder.Configuration["Spotify__ClientId"]);
+Console.WriteLine("🎯 Spotify__RedirectUri: " + builder.Configuration["Spotify__RedirectUri"]);
+Console.WriteLine("🎯 Spotify__ClientSecret: " + builder.Configuration["Spotify__ClientSecret"]);
 var app = builder.Build();
-
 // Migrations automáticas
 using (var scope = app.Services.CreateScope())
 {
@@ -61,8 +70,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-Console.WriteLine("🎯 Spotify__ClientId: " + builder.Configuration["Spotify__ClientId"]);
-Console.WriteLine("🎯 Spotify__RedirectUri: " + builder.Configuration["Spotify__RedirectUri"]);
-Console.WriteLine("🎯 Spotify__ClientSecret: " + builder.Configuration["Spotify__ClientSecret"]);
+
 
 app.Run();
