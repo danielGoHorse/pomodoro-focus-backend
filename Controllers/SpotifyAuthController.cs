@@ -99,7 +99,6 @@ namespace Pomodoro.Api.Controllers
             Console.WriteLine($"Access Token: {accessToken}");
             Console.WriteLine($"Refresh Token: {refreshToken}");
 
-            // Redireciona para o Frontend com os tokens na query string
             var frontEndUrl = "https://pomodoro-focus-ten.vercel.app";
             var redirectWithTokens = $"{frontEndUrl}/?access_token={accessToken}&refresh_token={refreshToken}";
 
