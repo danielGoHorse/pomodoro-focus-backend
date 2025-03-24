@@ -3,32 +3,21 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração da porta (para ambientes tipo Railway)
+// Configuração das portas (importante para Railway ou local)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// Adiciona Controllers e Swagger
+// Adiciona IHttpClientFactory
+builder.Services.AddHttpClient();
+
+// Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Conexão com PostgreSQL
+// Configuração do Banco
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Spotify Config (adiciona as variáveis do ambiente)
-builder.Configuration.AddEnvironmentVariables();
-
-var spotifyConfig = builder.Configuration.GetSection("Spotify");
-var clientId = spotifyConfig["ClientId"];
-var clientSecret = spotifyConfig["ClientSecret"];
-var redirectUri = spotifyConfig["RedirectUri"];
-
-// Exemplo de log para conferir no console (opcional em prod)
-Console.WriteLine($"Spotify ClientId: {clientId}");
-
-// ⬇️ ADICIONA O HTTPCLIENT FACTORY
-builder.Services.AddHttpClient();
 
 // CORS (libera o frontend para acessar o backend)
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -47,9 +36,13 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Configura Spotify com variáveis de ambiente
+builder.Configuration.AddEnvironmentVariables();
+
+// Cria o app
 var app = builder.Build();
 
-// Executa migrations automáticas
+// Migrations automáticas
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -63,12 +56,9 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI();
 }
 
-// Middleware
 app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 
-// Mapeia os Controllers
 app.MapControllers();
 
-// Run app
 app.Run();
