@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 
 namespace Pomodoro.Api.Controllers
@@ -50,34 +52,29 @@ namespace Pomodoro.Api.Controllers
         [HttpGet("callback")]
         public async Task<IActionResult> Callback([FromQuery] string code)
         {
-            if (string.IsNullOrEmpty(code))
-            {
-                Console.WriteLine("❌ Código de autorização não recebido.");
-                return BadRequest("Código de autorização não recebido.");
-            }
-
             var clientId = _configuration["Spotify__ClientId"];
             var clientSecret = _configuration["Spotify__ClientSecret"];
             var redirectUri = _configuration["Spotify__RedirectUri"];
 
-            Console.WriteLine("🎟️ Código de autorização recebido:");
-            Console.WriteLine(code);
+            Console.WriteLine($"🎯 ClientId: {clientId}");
+            Console.WriteLine($"🎯 RedirectUri: {redirectUri}");
+            Console.WriteLine($"🎯 ClientSecret: {clientSecret}");
 
             var client = _httpClientFactory.CreateClient();
 
-            var requestBody = new Dictionary<string, string>
-            {
-                { "grant_type", "authorization_code" },
-                { "code", code },
-                { "redirect_uri", redirectUri },
-                { "client_id", clientId },
-                { "client_secret", clientSecret }
-            };
+            // Codifica client_id:client_secret em Base64
+            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
 
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token")
-            {
-                Content = new FormUrlEncodedContent(requestBody)
-            };
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
+            request.Headers.Add("Authorization", $"Basic {basicAuth}");
+
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+    {
+        { "grant_type", "authorization_code" },
+        { "code", code },
+        { "redirect_uri", redirectUri }
+        // NÃO precisa do client_id e client_secret aqui!
+    });
 
             Console.WriteLine("📡 Solicitando access token do Spotify...");
 
@@ -91,19 +88,15 @@ namespace Pomodoro.Api.Controllers
             }
 
             var tokenResponse = JsonDocument.Parse(content).RootElement;
-
             var accessToken = tokenResponse.GetProperty("access_token").GetString();
             var refreshToken = tokenResponse.GetProperty("refresh_token").GetString();
 
-            Console.WriteLine("✅ Tokens recebidos do Spotify!");
+            Console.WriteLine("✅ Tokens recebidos do Spotify");
             Console.WriteLine($"Access Token: {accessToken}");
             Console.WriteLine($"Refresh Token: {refreshToken}");
 
             var frontEndUrl = "https://pomodoro-focus-ten.vercel.app";
             var redirectWithTokens = $"{frontEndUrl}/?access_token={accessToken}&refresh_token={refreshToken}";
-
-            Console.WriteLine("🔄 Redirecionando para Frontend:");
-            Console.WriteLine(redirectWithTokens);
 
             return Redirect(redirectWithTokens);
         }
