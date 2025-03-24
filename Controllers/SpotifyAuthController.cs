@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
+using Microsoft.Extensions.Options;
+using Pomodoro.Api.Configurations; // ⬅️ a pasta que criamos
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
-
 
 namespace Pomodoro.Api.Controllers
 {
@@ -12,26 +11,25 @@ namespace Pomodoro.Api.Controllers
     public class SpotifyAuthController : ControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
-
         private readonly SpotifySettings _spotifySettings;
-        public SpotifyAuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+
+        public SpotifyAuthController(
+            IHttpClientFactory httpClientFactory,
+            IOptions<SpotifySettings> spotifyOptions
+        )
         {
             _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
+            _spotifySettings = spotifyOptions.Value; // 🎯 Aqui é onde ele carrega
         }
+
         [HttpGet("login")]
         public IActionResult Login()
         {
-            var clientId = _configuration["Spotify:ClientId"];
-            var redirectUri = _configuration["Spotify:RedirectUri"];
-            var clientSecret = _configuration["Spotify:ClientSecret"];
+            Console.WriteLine($"🎯 ClientId: {_spotifySettings.ClientId}");
+            Console.WriteLine($"🎯 RedirectUri: {_spotifySettings.RedirectUri}");
+            Console.WriteLine($"🎯 ClientSecret: {_spotifySettings.ClientSecret}");
 
-            Console.WriteLine($"🎯 ClientId: {clientId}");
-            Console.WriteLine($"🎯 RedirectUri: {redirectUri}");
-            Console.WriteLine($"🎯 ClientSecret: {clientSecret}");
-
-            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri))
+            if (string.IsNullOrEmpty(_spotifySettings.ClientId) || string.IsNullOrEmpty(_spotifySettings.RedirectUri))
             {
                 return StatusCode(500, "❌ Variáveis de ambiente do Spotify não estão configuradas corretamente.");
             }
@@ -40,9 +38,9 @@ namespace Pomodoro.Api.Controllers
 
             var authUrl = $"https://accounts.spotify.com/authorize" +
                           $"?response_type=code" +
-                          $"&client_id={clientId}" +
+                          $"&client_id={_spotifySettings.ClientId}" +
                           $"&scope={Uri.EscapeDataString(scopes)}" +
-                          $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+                          $"&redirect_uri={Uri.EscapeDataString(_spotifySettings.RedirectUri)}";
 
             Console.WriteLine($"🔗 Redirecionando para: {authUrl}");
 
@@ -52,29 +50,29 @@ namespace Pomodoro.Api.Controllers
         [HttpGet("callback")]
         public async Task<IActionResult> Callback([FromQuery] string code)
         {
-            var clientId = _configuration["Spotify__ClientId"];
-            var clientSecret = _configuration["Spotify__ClientSecret"];
-            var redirectUri = _configuration["Spotify__RedirectUri"];
+            Console.WriteLine($"🎟️ Código de autorização recebido: {code}");
+            Console.WriteLine($"🎯 ClientId: {_spotifySettings.ClientId}");
+            Console.WriteLine($"🎯 RedirectUri: {_spotifySettings.RedirectUri}");
+            Console.WriteLine($"🎯 ClientSecret: {_spotifySettings.ClientSecret}");
 
-            Console.WriteLine($"🎯 ClientId: {clientId}");
-            Console.WriteLine($"🎯 RedirectUri: {redirectUri}");
-            Console.WriteLine($"🎯 ClientSecret: {clientSecret}");
+            if (string.IsNullOrEmpty(_spotifySettings.ClientId) || string.IsNullOrEmpty(_spotifySettings.ClientSecret))
+            {
+                return StatusCode(500, "❌ Variáveis do Spotify ausentes.");
+            }
 
             var client = _httpClientFactory.CreateClient();
 
-            // Codifica client_id:client_secret em Base64
-            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+            var basicAuth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_spotifySettings.ClientId}:{_spotifySettings.ClientSecret}"));
 
             var request = new HttpRequestMessage(HttpMethod.Post, "https://accounts.spotify.com/api/token");
             request.Headers.Add("Authorization", $"Basic {basicAuth}");
 
             request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
-    {
-        { "grant_type", "authorization_code" },
-        { "code", code },
-        { "redirect_uri", redirectUri }
-        // NÃO precisa do client_id e client_secret aqui!
-    });
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "redirect_uri", _spotifySettings.RedirectUri }
+            });
 
             Console.WriteLine("📡 Solicitando access token do Spotify...");
 
@@ -100,14 +98,5 @@ namespace Pomodoro.Api.Controllers
 
             return Redirect(redirectWithTokens);
         }
-    }
-
-    public class SpotifyTokenResponse
-    {
-        public string access_token { get; set; }
-        public string token_type { get; set; }
-        public int expires_in { get; set; }
-        public string refresh_token { get; set; }
-        public string scope { get; set; }
     }
 }
