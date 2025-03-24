@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Web;
+using System.Text.Json.Serialization;
 
 namespace PomodoroFocus.API.Controllers
 {
@@ -77,12 +78,15 @@ namespace PomodoroFocus.API.Controllers
             // Frontend URL para onde você quer mandar os tokens!
             var frontendUrl = "https://pomodoro-focus-ten.vercel.app";
 
-            var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
+            // var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
 
             _logger.LogInformation("✅ Tokens recebidos do Spotify");
             _logger.LogInformation("Access Token: {AccessToken}", tokens.AccessToken);
             _logger.LogInformation("Refresh Token: {RefreshToken}", tokens.RefreshToken);
 
+            var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
+
+            _logger.LogInformation("🔗 Redirecionando para: {RedirectUrl}", redirectUrl);
             return Redirect(redirectUrl);
         }
 
@@ -183,13 +187,22 @@ namespace PomodoroFocus.API.Controllers
         #endregion
     }
 
-    #region DTOs
+    #region DTOspublic class SpotifyTokenResponse
     public class SpotifyTokenResponse
     {
+        [JsonPropertyName("access_token")]
         public string AccessToken { get; set; }
+
+        [JsonPropertyName("token_type")]
         public string TokenType { get; set; }
+
+        [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
+
+        [JsonPropertyName("refresh_token")]
         public string RefreshToken { get; set; }
+
+        [JsonPropertyName("scope")]
         public string Scope { get; set; }
     }
 
