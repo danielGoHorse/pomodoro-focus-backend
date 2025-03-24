@@ -16,12 +16,20 @@ namespace Pomodoro.Api.Controllers
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
         }
-
         [HttpGet("login")]
         public IActionResult Login()
         {
             var clientId = _configuration["Spotify__ClientId"];
             var redirectUri = _configuration["Spotify__RedirectUri"];
+
+            // Loga no console
+            Console.WriteLine($"clientId: {clientId}");
+            Console.WriteLine($"redirectUri: {redirectUri}");
+
+            if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri))
+            {
+                return StatusCode(500, "❌ Variáveis de ambiente do Spotify não estão configuradas corretamente.");
+            }
 
             var scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming";
 
@@ -30,9 +38,6 @@ namespace Pomodoro.Api.Controllers
                           $"&client_id={clientId}" +
                           $"&scope={Uri.EscapeDataString(scopes)}" +
                           $"&redirect_uri={Uri.EscapeDataString(redirectUri)}";
-
-            Console.WriteLine("🔗 Redirecionando para Spotify Auth URL:");
-            Console.WriteLine(authUrl);
 
             return Redirect(authUrl);
         }
