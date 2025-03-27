@@ -87,7 +87,7 @@ namespace PomodoroFocus.API.Controllers
             _logger.LogInformation("Access Token: {AccessToken}", tokens.AccessToken);
             _logger.LogInformation("Refresh Token: {RefreshToken}", tokens.RefreshToken);
 
-            var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
+            var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}&expires_in={tokens.ExpiresIn}";
 
             _logger.LogInformation("🔗 Redirecionando para: {RedirectUrl}", redirectUrl);
             return Redirect(redirectUrl);
