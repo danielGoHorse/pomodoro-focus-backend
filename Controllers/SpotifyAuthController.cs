@@ -34,27 +34,27 @@ namespace PomodoroFocus.API.Controllers
             _redirectUri = _configuration["Spotify:RedirectUri"];
         }
 
-        /// <summary>
-        /// Inicia o fluxo de autenticação do Spotify
-        /// </summary>
         [HttpGet("login")]
         public IActionResult Login()
         {
+            // Junte tudo que usa no front
             var scopes = new List<string>
-            {
-                "user-read-playback-state",
-                "user-modify-playback-state",
-                "user-read-currently-playing",
-                "streaming"
-            };
+    {
+        "user-read-private",
+        "user-read-email",
+        "playlist-read-private",
+        "playlist-read-collaborative",
+        "user-modify-playback-state",
+        "user-read-playback-state",
+        "user-read-currently-playing",
+        "streaming"
+    };
 
-            var authorizeUrl = "https://accounts.spotify.com/authorize" +
-                $"?response_type=code" +
-                $"&client_id={_clientId}" +
-                $"&scope={HttpUtility.UrlEncode(string.Join(" ", scopes))}" +
-                $"&redirect_uri={HttpUtility.UrlEncode(_redirectUri)}";
-
-            _logger.LogInformation("🔗 Redirecionando para: {Url}", authorizeUrl);
+            var authorizeUrl = "https://accounts.spotify.com/authorize"
+                + "?response_type=code"
+                + $"&client_id={_clientId}"
+                + $"&scope={HttpUtility.UrlEncode(string.Join(" ", scopes))}"
+                + $"&redirect_uri={HttpUtility.UrlEncode(_redirectUri)}";
 
             return Redirect(authorizeUrl);
         }
@@ -76,7 +76,10 @@ namespace PomodoroFocus.API.Controllers
                 return BadRequest("Erro ao obter tokens do Spotify.");
 
             // Frontend URL para onde você quer mandar os tokens!
-            var frontendUrl = "https://pomodoro-focus-ten.vercel.app";
+            //LOCAL
+            // var frontendUrl = "http://localhost:3000"; 
+            //PRODUÇÃO
+            var frontendUrl = "https://pomodoro-focus-ten.vercel.app/";
 
             // var redirectUrl = $"{frontendUrl}/?access_token={tokens.AccessToken}&refresh_token={tokens.RefreshToken}";
 

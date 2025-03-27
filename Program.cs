@@ -15,7 +15,7 @@ Console.WriteLine($"🎯 Spotify__ClientId: {builder.Configuration["Spotify__Cli
 Console.WriteLine($"🎯 Spotify__ClientSecret: {builder.Configuration["Spotify__ClientSecret"]}");
 Console.WriteLine($"🎯 Spotify__RedirectUri: {builder.Configuration["Spotify__RedirectUri"]}");
 
-// ✅ Define a porta dinamicamente para Railway ou local
+// ✅ Define a porta dinamicamente para Railway ou local (comente as duas linhas para apontar 5103)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
