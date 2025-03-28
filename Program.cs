@@ -1,10 +1,11 @@
 using Pomodoro.Api.Data;
 using Pomodoro.Api.Configurations;
 using Microsoft.EntityFrameworkCore;
+// IMPORTS referentes ao Repository e Service:
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Carrega variáveis de ambiente primeiro
+// ✅ Carrega variáveis de ambiente (opcional se já está no .csproj)
 builder.Configuration.AddEnvironmentVariables();
 
 // ✅ Injeta configurações do Spotify (vinculando à section "Spotify")
@@ -15,11 +16,11 @@ Console.WriteLine($"🎯 Spotify__ClientId: {builder.Configuration["Spotify__Cli
 Console.WriteLine($"🎯 Spotify__ClientSecret: {builder.Configuration["Spotify__ClientSecret"]}");
 Console.WriteLine($"🎯 Spotify__RedirectUri: {builder.Configuration["Spotify__RedirectUri"]}");
 
-// ✅ Define a porta dinamicamente para Railway ou local (comente as duas linhas para apontar 5103)
+// ✅ Define a porta dinamicamente para Railway ou local
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// ✅ Injeta dependências
+// ✅ Injeta dependências necessárias
 builder.Services.AddHttpClient(); // necessário pro SpotifyAuthController
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -31,7 +32,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ✅ Política CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
@@ -44,6 +44,10 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod();
     });
 });
+
+// 🚨 Aqui é onde você REGISTRA o Repository e o Service:
+builder.Services.AddScoped<IPomodoroSessionRepository, PomodoroSessionRepository>();
+builder.Services.AddScoped<IPomodoroSessionService, PomodoroSessionService>();
 
 // ✅ Builda a aplicação
 var app = builder.Build();
